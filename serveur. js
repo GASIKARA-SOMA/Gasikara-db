@@ -1,0 +1,61 @@
+const express = require('express');
+const { Pool } = require('pg');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// TES INFORMATIONS DE BASE DE DONNÉES
+const pool = new Pool({
+  user: 'gasikara_admin',
+  host: 'dpg-d4gojsali9vc73doi790-a.frankfurt-postgres.render.com',
+  database: 'gasikara_db',
+  password: 'iLl8H99pgnwkSWXa2vnw2qpK2QNPtTxK',
+  port: 5432,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// CRÉER LA TABLE DES JEUX
+async function createTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS games (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        image VARCHAR(500),
+        platforms VARCHAR(100)[],
+        category VARCHAR(100),
+        download_link VARCHAR(500),
+        section VARCHAR(50)
+      )
+    `);
+    console.log('✅ Table games créée !');
+  } catch (error) {
+    console.log('❌ Erreur:', error);
+  }
+}
+
+// ROUTE TEST
+app.get('/api/games', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM games');
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ROUTE RACINE
+app.get('/', (req, res) => {
+  res.json({ message: '🚀 API GasikaraSoma en ligne !' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  await createTable();
+});
